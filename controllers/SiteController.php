@@ -9,6 +9,10 @@ use yii\web\Response;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
+use app\models\SignupForm;
+use app\models\User;
+
+
 
 class SiteController extends Controller
 {
@@ -88,6 +92,9 @@ class SiteController extends Controller
 
     /**
      * Logout action.
+     * Выходит из системы текущий пользователь.
+     * Это приведет к удалению данных сеанса, связанных с аутентификацией.
+     * Если $destroySession имеет значение true, все данные сеанса будут удалены.
      *
      * @return Response
      */
@@ -115,6 +122,34 @@ class SiteController extends Controller
             'model' => $model,
         ]);
     }
+
+    /**
+     * Registration
+     */
+
+    public function actionSignup(){
+        if (!Yii::$app->user->isGuest) {
+            return $this->goHome();
+        }
+        $model = new SignupForm();
+        if($model->load(\Yii::$app->request->post()) && $model->validate()){
+            $user = new User();
+            $user->username = $model->username;
+            $user->email = $model->email;
+            $user->setPassword($model->password);
+            $user->generateAuthKey();
+            $user->generateEmailVerificationToken();
+
+            if($user->save()){
+                return $this->goHome();
+            }
+        }
+
+        return $this->render('signup', compact('model'));
+    }
+
+
+
 
     /**
      * Displays about page.
